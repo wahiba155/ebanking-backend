@@ -200,4 +200,24 @@ public class BankAccountServiceImpl implements BankAccountService {
                 .map(cust -> dtoMapper.fromCustomer(cust))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<BankAccountDTO> getCustomerAccounts(Long customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+        List<BankAccount> bankAccounts = bankAccountRepository
+                .findByCustomer(customer);
+        return bankAccounts.stream().map(bankAccount -> {
+            if (bankAccount instanceof SavingAccount) {
+                return dtoMapper.fromSavingBankAccount((SavingAccount) bankAccount);
+            } else {
+                return dtoMapper.fromCurrentBankAccount((CurrentAccount) bankAccount);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteAccount(String accountId) {
+        bankAccountRepository.deleteById(accountId);
+    }
 }

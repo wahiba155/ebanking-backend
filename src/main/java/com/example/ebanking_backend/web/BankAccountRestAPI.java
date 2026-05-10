@@ -3,8 +3,10 @@ package com.example.ebanking_backend.web;
 import com.example.ebanking_backend.dtos.*;
 import com.example.ebanking_backend.exceptions.BalanceNotSufficientException;
 import com.example.ebanking_backend.exceptions.BankAccountNotFoundException;
+import com.example.ebanking_backend.exceptions.CustomerNotFoundException;
 import com.example.ebanking_backend.services.BankAccountService;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -81,5 +83,38 @@ public class BankAccountRestAPI {
                 transferRequestDTO.getAccountDestination(),
                 transferRequestDTO.getAmount()
         );
+    }
+
+    @PostMapping("/accounts/current")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
+    public CurrentBankAccountDTO saveCurrentBankAccount(
+            @RequestParam double initialBalance,
+            @RequestParam double overDraft,
+            @RequestParam Long customerId) throws CustomerNotFoundException {
+        return bankAccountService.saveCurrentBankAccount(
+                initialBalance, overDraft, customerId);
+    }
+
+    @PostMapping("/accounts/saving")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
+    public SavingBankAccountDTO saveSavingBankAccount(
+            @RequestParam double initialBalance,
+            @RequestParam double interestRate,
+            @RequestParam Long customerId) throws CustomerNotFoundException {
+        return bankAccountService.saveSavingBankAccount(
+                initialBalance, interestRate, customerId);
+    }
+
+    @GetMapping("/accounts/customer/{customerId}")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_USER')")
+    public List<BankAccountDTO> getCustomerAccounts(
+            @PathVariable Long customerId) {
+        return bankAccountService.getCustomerAccounts(customerId);
+    }
+
+    @DeleteMapping("/accounts/{accountId}")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
+    public void deleteAccount(@PathVariable String accountId) {
+        bankAccountService.deleteAccount(accountId);
     }
 }
