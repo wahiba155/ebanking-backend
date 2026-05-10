@@ -1,10 +1,15 @@
 package com.example.ebanking_backend;
 
+import com.example.ebanking_backend.entities.AppRole;
+import com.example.ebanking_backend.entities.AppUser;
+import com.example.ebanking_backend.repositories.AppUserRepository;
+import com.example.ebanking_backend.services.AccountService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +22,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -41,36 +45,35 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // 1. Encodeur de mot de passe
+
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public UserDetailsService userDetailsService(
+            AppUserRepository appUserRepository) {
+        return username -> {
+            AppUser user = appUserRepository.findByUsername(username);
+            if (user == null)
+                throw new RuntimeException("User not found");
+            return org.springframework.security.core.userdetails.User
+                    .withUsername(user.getUsername())
+                    .password(user.getPassword())
+                    .roles(user.getRoles().stream()
+                            .map(AppRole::getRoleName)
+                            .toArray(String[]::new))
+                    .build();
+        };
     }
 
-    // 2. Utilisateurs en mémoire (pour les tests)
-    @Bean
-    public InMemoryUserDetailsManager inMemoryUserDetailsManager() {
-        return new InMemoryUserDetailsManager(
-                User.withUsername("user1")
-                        .password(passwordEncoder().encode("1234"))
-                        .roles("USER")
-                        .build(),
-                User.withUsername("admin")
-                        .password(passwordEncoder().encode("1234"))
-                        .roles("USER", "ADMIN")
-                        .build()
-        );
-    }
-
-    // 3. Authentication Manager
     @Bean
     public AuthenticationManager authenticationManager(
-            UserDetailsService userDetailsService) {
+            UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(provider);
     }
+
+
 
     // 4. JWT Decoder
     @Bean

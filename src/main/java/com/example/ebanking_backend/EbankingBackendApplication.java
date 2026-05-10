@@ -1,9 +1,6 @@
 package com.example.ebanking_backend;
 
-import com.example.ebanking_backend.dtos.BankAccountDTO;
-import com.example.ebanking_backend.dtos.CurrentBankAccountDTO;
-import com.example.ebanking_backend.dtos.CustomerDTO;
-import com.example.ebanking_backend.dtos.SavingBankAccountDTO;
+import com.example.ebanking_backend.dtos.*;
 import com.example.ebanking_backend.entities.*;
 import com.example.ebanking_backend.enums.AccountStatus;
 import com.example.ebanking_backend.enums.OperationType;
@@ -11,6 +8,7 @@ import com.example.ebanking_backend.exceptions.CustomerNotFoundException;
 import com.example.ebanking_backend.repositories.AccountOperationRepository;
 import com.example.ebanking_backend.repositories.BankAccountRepository;
 import com.example.ebanking_backend.repositories.CustomerRepository;
+import com.example.ebanking_backend.services.AccountService;
 import com.example.ebanking_backend.services.BankAccountService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -27,6 +25,29 @@ public class EbankingBackendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(EbankingBackendApplication.class, args);
+	}
+	@Bean
+	CommandLineRunner initUsers(AccountService accountService) {
+		return args -> {
+			// Créer les rôles
+			accountService.addNewRole("ADMIN");
+			accountService.addNewRole("USER");
+
+			// Créer les utilisateurs
+			NewUserDTO admin = new NewUserDTO();
+			admin.setUsername("admin");
+			admin.setPassword("1234");
+			admin.setEmail("admin@gmail.com");
+			admin.setRoles(List.of("ADMIN", "USER"));
+			accountService.addNewUser(admin);
+
+			NewUserDTO user1 = new NewUserDTO();
+			user1.setUsername("user1");
+			user1.setPassword("1234");
+			user1.setEmail("user1@gmail.com");
+			user1.setRoles(List.of("USER"));
+			accountService.addNewUser(user1);
+		};
 	}
 
 	@Bean
