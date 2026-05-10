@@ -19,6 +19,8 @@ public abstract class BankAccount {
     private Date createdAt;
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
+    private String createdBy;  // ← Ajouter
+
     @ManyToOne
     private Customer customer;
     @OneToMany(mappedBy = "bankAccount", fetch = FetchType.LAZY)

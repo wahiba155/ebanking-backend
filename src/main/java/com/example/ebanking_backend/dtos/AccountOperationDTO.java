@@ -11,4 +11,6 @@ public class AccountOperationDTO {
     private double amount;
     private OperationType type;
     private String description;
+    private String createdBy;  // ← Ajouter
+
 }
